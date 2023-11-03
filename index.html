@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Map Example</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAm3dbqf737vnMRhqGzNXJEqWomyIwR3Eg"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.js"></script>
+    <style>
+      #map {
+        height: 500px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      var map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: 0, lng: 0},
+        zoom: 19
+      });
+      
+      var marker = new google.maps.Marker({
+        map: map,
+        position: {lat: 0, lng: 0}
+      });
+      
+      
+      
+      var clientId = "clientId-" + new Date().getTime();
+      var client = new Paho.MQTT.Client("broker.hivemq.com", 8000, clientId);
+      
+      client.onConnectionLost = function (responseObject) {
+        console.log("Connection lost: " + responseObject.errorMessage);
+      };
+      
+      client.connect({ onSuccess: function () {
+        console.log("Connected to HiveMQ");
+        client.subscribe("mars1122_gps2");
+      }});
+      
+      client.onMessageArrived = function (message) {
+        console.log("Message arrived: " + message.payloadString);
+        var data = JSON.parse(message.payloadString);
+        console.log("Received data:", data);
+        
+        // update marker position
+        var latLng = new google.maps.LatLng(data.latitude, data.longitude);
+        marker.setPosition(latLng);
+        console.log("Set marker position to:", latLng);
+        
+      
+        
+        // set map center and zoom level
+        map.setCenter(latLng);
+        map.setZoom(19);
+        console.log("Set map center to:", latLng);
+      };
+    </script>
+  </body>
+</html>
